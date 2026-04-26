@@ -259,7 +259,7 @@ export async function scrapeJobs() {
         });
 
         try {
-          processScrapedJob(config.ADMIN_ID, jobs.reverse());
+          processScrapedJob(jobs.reverse());
         } catch (err) {
           console.error("Error in processScrapedJob:", (err as Error).message);
         }

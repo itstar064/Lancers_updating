@@ -1,6 +1,9 @@
 interface JobType {
   id: string;
   bidPlaced: boolean;
+  channelMessageId?: number;
+  groupMessageId?: number;
+  bidText?: string;
 }
 
 export interface ScrapedJobType {

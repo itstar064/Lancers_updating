@@ -1,19 +1,15 @@
 import { sendMessage } from "./bot";
+import { scheduleAutoBid } from "./autoBid";
+import config from "./config";
 import Job from "./models/Job";
 import { ScrapedJobType } from "./types/job";
 import { delay } from "./utils";
-
-/** Telegram HTML mode: escape user-controlled text. */
-const escapeTelegramHtml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-/** `href` attribute: `&` must be escaped for HTML parse mode. */
-const escapeHref = (s: string) => s.replace(/&/g, "&amp;");
+import { escapeTelegramHtml, escapeHref } from "./utils/telegramFormat";
 
 const TELEGRAM_CAPTION_MAX = 1024;
 const TELEGRAM_MESSAGE_MAX = 4096;
 
-const processScrapedJob = async (userid: string, jobs: ScrapedJobType[]) => {
+const processScrapedJob = async (jobs: ScrapedJobType[]) => {
   console.log(`🔄 Processing ${jobs.length} jobs...`);
   for (let i = 0; i < jobs.length; i++) {
     const job = jobs[i];
@@ -40,7 +36,7 @@ const processScrapedJob = async (userid: string, jobs: ScrapedJobType[]) => {
 
     if (inserted) {
       console.log(`✨ New job found! ID: ${jobid} - ${job.title}`);
-      
+
       const maxLen = job.employerAvatar
         ? TELEGRAM_CAPTION_MAX
         : TELEGRAM_MESSAGE_MAX;
@@ -94,7 +90,32 @@ const processScrapedJob = async (userid: string, jobs: ScrapedJobType[]) => {
         message += linkFooter;
       }
 
-      await sendMessage(userid, message, job.employerAvatar);
+      // Channel: public feed. Group: same card, used as reply target for 入札文 in discussion.
+      const channelRes = await sendMessage(
+        config.TELEGRAM_CHANNEL_ID,
+        message,
+        job.employerAvatar,
+      );
+      const groupRes = await sendMessage(
+        config.TELEGRAM_DISCUSSION_GROUP_ID,
+        message,
+        job.employerAvatar,
+      );
+
+      const channelMessageId = (channelRes as { message_id?: number })?.message_id;
+      const groupMessageId = (groupRes as { message_id?: number })?.message_id;
+
+      await Job.updateOne(
+        { id: jobid },
+        { $set: { channelMessageId, groupMessageId } },
+      );
+
+      scheduleAutoBid({
+        jobid,
+        groupMessageId,
+        channelMessageId,
+        job,
+      });
     } else {
       console.log(`⏭️  Job already exists, skipping. ID: ${jobid}`);
     }

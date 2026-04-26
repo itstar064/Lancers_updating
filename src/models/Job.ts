@@ -11,6 +11,18 @@ const JobSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    channelMessageId: {
+      type: Number,
+      default: null,
+    },
+    groupMessageId: {
+      type: Number,
+      default: null,
+    },
+    bidText: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

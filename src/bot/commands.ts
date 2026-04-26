@@ -90,12 +90,13 @@ const setup_commands = async (bot: Telegraf) => {
     }
   });
 
-  let canStart = false;
+  let canStart = true;
 
   bot.command("start_scraping", async (ctx) => {
     try {
       const userId = ctx.update.message.from.id;
-      if (config.ADMIN_ID !== userId.toString())
+      const adminId = config.TELEGRAM_ADMIN_USER_ID || config.ADMIN_ID;
+      if (adminId !== userId.toString())
         return await ctx.reply(`🚫 This command is for admin only.`);
 
       const scraping = getScrapingStatus();
@@ -116,7 +117,8 @@ const setup_commands = async (bot: Telegraf) => {
   bot.command("stop_scraping", async (ctx) => {
     try {
       const userId = ctx.update.message.from.id;
-      if (config.ADMIN_ID !== userId.toString())
+      const adminId = config.TELEGRAM_ADMIN_USER_ID || config.ADMIN_ID;
+      if (adminId !== userId.toString())
         return await ctx.reply(`🚫 This command is for admin only.`);
 
       const scraping = getScrapingStatus();
