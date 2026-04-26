@@ -22,7 +22,7 @@ const SCRAPE_LOOP_DELAY_MS = 5000;
 
 const getAuthCookieHeaderWithPlaywright = async () => {
   const browser = await chromium.launch({
-    headless: false, // MUST be false for manual login
+    headless: true, // MUST be false for manual login
   });
 
   const context = await browser.newContext();
