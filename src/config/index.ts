@@ -14,7 +14,14 @@ const TELEGRAM_ADMIN_USER_ID = process.env.TELEGRAM_ADMIN_USER_ID;
 const AUTO_BID =
   (process.env.AUTO_BID || "").toLowerCase() === "true" ||
   process.env.AUTO_BID === "1";
-const OPENAI = process.env.OPENAI_API;
+const BID_TEXT_MODE = (process.env.BID_TEXT_MODE || "template").toLowerCase();
+const BID_API_URL = process.env.BID_API_URL;
+const BID_API_KEY = process.env.BID_API_KEY;
+const BID_API_TIMEOUT_MS = Number(
+  process.env.BID_API_TIMEOUT_MS || 120_000,
+);
+/** Overrides `DEFAULT_BID_PROMPTS` from `bidPrompts.ts` when set. */
+const BID_PROMPTS = process.env.BID_PROMPTS;
 
 let config_missing = false;
 
@@ -42,8 +49,8 @@ if (!ADMIN_ID) {
   console.error("Missing ADMIN_ID");
   config_missing = true;
 }
-if (!OPENAI) {
-  console.error("Missing OPENAI");
+if (BID_TEXT_MODE === "api" && !BID_API_URL) {
+  console.error("BID_TEXT_MODE=api requires BID_API_URL");
   config_missing = true;
 }
 
@@ -75,7 +82,13 @@ interface Config {
   /** Telegram numeric user id for /start_scraping, etc. Falls back to ADMIN_ID if unset. */
   TELEGRAM_ADMIN_USER_ID: string | undefined;
   AUTO_BID: boolean;
-  OPENAI_API: string;
+  /** "template" (test, no LLM) or "api" (BID_API_URL) */
+  BID_TEXT_MODE: string;
+  BID_API_URL: string | undefined;
+  BID_API_KEY: string | undefined;
+  BID_API_TIMEOUT_MS: number;
+  /** Custom 入札指示文; if empty, `bidPrompts.ts` default is used. */
+  BID_PROMPTS: string | undefined;
   PROXY: string | undefined;
   PROXY_AUTH: { username: string; password: string } | undefined;
 }
@@ -91,7 +104,11 @@ const config: Config = {
   TELEGRAM_DISCUSSION_GROUP_ID: TELEGRAM_DISCUSSION_GROUP_ID!,
   TELEGRAM_ADMIN_USER_ID: TELEGRAM_ADMIN_USER_ID,
   AUTO_BID,
-  OPENAI_API: OPENAI!,
+  BID_TEXT_MODE,
+  BID_API_URL: BID_API_URL || undefined,
+  BID_API_KEY: BID_API_KEY || undefined,
+  BID_API_TIMEOUT_MS,
+  BID_PROMPTS: BID_PROMPTS || undefined,
   PROXY: process.env.PROXY,
   PROXY_AUTH: process.env.PROXY_AUTH
     ? JSON.parse(process.env.PROXY_AUTH)
