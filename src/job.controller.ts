@@ -110,12 +110,29 @@ const processScrapedJob = async (jobs: ScrapedJobType[]) => {
         { $set: { channelMessageId, groupMessageId } },
       );
 
-      scheduleAutoBid({
-        jobid,
-        groupMessageId,
-        channelMessageId,
-        job,
-      });
+      if (config.AUTO_BID) {
+        const pending = `⏳ <b>新規</b> 入札を試行中 (ID: <code>${escapeTelegramHtml(
+          jobid,
+        )}</code>)…`;
+        if (groupMessageId != null) {
+          await sendMessage(config.TELEGRAM_DISCUSSION_GROUP_ID, pending, {
+            replyToMessageId: groupMessageId,
+            linkPreviewOff: true,
+          });
+        }
+        if (channelMessageId != null) {
+          await sendMessage(config.TELEGRAM_CHANNEL_ID, pending, {
+            replyToMessageId: channelMessageId,
+            linkPreviewOff: true,
+          });
+        }
+        scheduleAutoBid({
+          jobid,
+          groupMessageId,
+          channelMessageId,
+          job,
+        });
+      }
     } else {
       console.log(`⏭️  Job already exists, skipping. ID: ${jobid}`);
     }

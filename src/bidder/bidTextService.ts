@@ -1,6 +1,7 @@
 import axios from "axios";
 import config from "@/config";
 import { DEFAULT_BID_PROMPTS } from "./bidPrompts";
+import { STATIC_BID_TEMPLATE_BODY } from "./defaultBidTemplate";
 
 export type BidTextRequest = {
   jobId: string;
@@ -9,29 +10,19 @@ export type BidTextRequest = {
 };
 
 /**
- * テスト用: 定形文（API 不要）。jobId・説明要約を埋めます。
- * 本番: BID_TEXT_MODE=api で external API が返す入札文を使います（入札成功時もその文字列を result に載せる）。
+ * 定形 入札文: `defaultBidTemplate.ts` + 案件ID / 掲載抜粋
+ * 本番 API: BID_TEXT_MODE=api
  */
 function buildTemplateBidText(req: BidTextRequest): string {
   const shortDesc = (req.description || "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 500);
-  return [
-    "拝啓",
-    "",
-    `本案件（案件ID: ${req.jobId}）の募集内容を拝見し、ぜひご提案の機会をいただきたく、ご連絡申し上げます。`,
-    "",
-    "（テスト用 テンプレート文です。BID_TEXT_MODE=template 時に利用されます。本番では BID_TEXT_MODE=api と 入札API を接続してください。）",
-    "",
-    "募集の趣旨に沿って、段階的に要件の整理、実装、調整、納品まで一貫して丁寧に取り組みます。期日や品質面でもご要望に沿えるよう、初期の打ち合わせで認識をすり合わせさせていただきたいです。",
-    shortDesc
-      ? `\n掲載概要の抜粋: ${shortDesc}\n`
-      : "\n",
-    "納得いただける成果につながるよう努めてまいります。ご不明点はお気軽にご相談ください。",
-    "",
-    "今後のご返信、心よりお待ちしております。",
-  ].join("\n");
+  const head = `【案件ID: ${req.jobId}】\n\n`;
+  const foot = shortDesc
+    ? `\n\n—\n掲載概要抜粋（参考）:\n${shortDesc}\n`
+    : "";
+  return head + STATIC_BID_TEMPLATE_BODY + foot;
 }
 
 /**
@@ -131,3 +122,4 @@ export const resolveBidText = async (req: BidTextRequest): Promise<string> => {
 };
 
 export { buildTemplateBidText, DEFAULT_BID_PROMPTS, getEffectivePrompts };
+export { STATIC_BID_TEMPLATE_BODY } from "./defaultBidTemplate";

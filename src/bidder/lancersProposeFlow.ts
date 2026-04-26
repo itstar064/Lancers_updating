@@ -120,13 +120,29 @@ export const runFullProposeFlow = async (
   );
   await agreeNda(page);
 
-  const estimate = bidText.replace(/\s+/g, " ").trim().slice(0, MAX_ESTIMATE_LEN);
-  const body = bidText.replace(/\s+/g, " ").trim().slice(0, MAX_DESCRIPTION_LEN);
-
-  await page.locator("#ProposalEstimate").waitFor({ state: "visible", timeout: 20000 });
-  await page.locator("#ProposalEstimate").fill(estimate);
-  await page.locator("#ProposalDescription").waitFor({ state: "visible", timeout: 20000 });
-  await page.locator("#ProposalDescription").fill(body);
+  const t = bidText.replace(/\s+/g, " ").trim();
+  /** 長文は 企画(2000) + 本文(直後 3000) に連結して掲載（重複を避ける） */
+  if (t.length <= MAX_ESTIMATE_LEN) {
+    await page.locator("#ProposalEstimate").waitFor({ state: "visible", timeout: 20000 });
+    await page.locator("#ProposalEstimate").fill(t);
+    await page.locator("#ProposalDescription").waitFor({ state: "visible", timeout: 20000 });
+    await page.locator("#ProposalDescription").fill(t);
+  } else {
+    const est = t.slice(0, MAX_ESTIMATE_LEN);
+    const desc = t.slice(
+      MAX_ESTIMATE_LEN,
+      MAX_ESTIMATE_LEN + MAX_DESCRIPTION_LEN,
+    );
+    await page.locator("#ProposalEstimate").waitFor({ state: "visible", timeout: 20000 });
+    await page.locator("#ProposalEstimate").fill(est);
+    await page.locator("#ProposalDescription").waitFor({ state: "visible", timeout: 20000 });
+    await page
+      .locator("#ProposalDescription")
+      .fill(
+        desc ||
+          "（上記 企画に記載。続きは掲載文字数内に収まりました。）",
+      );
+  }
 
   await waitMilestoneReady(page);
   await fillVisibleProposalOptionsIfNeeded(page);

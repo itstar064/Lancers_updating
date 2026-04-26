@@ -11,9 +11,9 @@ const ADMIN_ID = process.env.ADMIN_ID;
 const TELEGRAM_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
 const TELEGRAM_DISCUSSION_GROUP_ID = process.env.TELEGRAM_DISCUSSION_GROUP_ID;
 const TELEGRAM_ADMIN_USER_ID = process.env.TELEGRAM_ADMIN_USER_ID;
-const AUTO_BID =
-  (process.env.AUTO_BID || "").toLowerCase() === "true" ||
-  process.env.AUTO_BID === "1";
+/** 新規案件の自動入札。未設定なら有効。無効: AUTO_BID=false|0|no|off */
+const _auto = (process.env.AUTO_BID || "").toLowerCase().trim();
+const AUTO_BID = _auto === "" ? true : !["false", "0", "no", "off"].includes(_auto);
 const BID_TEXT_MODE = (process.env.BID_TEXT_MODE || "template").toLowerCase();
 const BID_API_URL = process.env.BID_API_URL;
 const BID_API_KEY = process.env.BID_API_KEY;
